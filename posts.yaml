@@ -1,0 +1,110 @@
+# ORBTR Blog Posts
+#
+# This file is fetched periodically by orbtr.io from a remote config URL.
+# Each post gets its own page at /blog/{slug} for SEO purposes.
+#
+# Fields:
+#   slug:        URL slug (required, unique) — appears as /blog/{slug}
+#   title:       Post title (required)
+#   date:        Publication date, e.g. "7 Mar 2026" (required)
+#   author:      Author name (optional)
+#   tags:        List of tag labels (optional)
+#   description: Short summary for listing cards and meta tags (required)
+#   image:       Hero/card image URL (optional)
+#   content:     Full post body as HTML (required)
+#
+# Notes:
+#   - Posts are displayed in the order they appear in this file (newest first)
+#   - Content supports full HTML including headings, code blocks, images, links
+#   - Use YAML literal block scalars (|) for multi-line content
+#   - Images can be absolute URLs or relative to /static/images/
+
+posts:
+  - slug: introducing-orbtr
+    title: "Introducing ORBTR: Zero-Trust Device Management Meets Mesh Networking"
+    date: "12 Mar 2026"
+    author: "ORBTR Team"
+    tags:
+      - announcement
+      - product
+    description: "We're building the device management platform we always wanted — one where security isn't a bolt-on feature, it's the foundation. Here's what ORBTR is and why we built it."
+    image: "/static/images/dashboard-compressed.png"
+    content: |
+      <h2>Why we built ORBTR</h2>
+      <p>Most organisations cobble together separate tools for MDM, VPN, endpoint monitoring, and policy enforcement. Each tool has its own agent, its own control plane, and its own security model. The result is complexity, gaps, and operational overhead.</p>
+      <p>ORBTR replaces that stack with a single agent and a distributed mesh backend. Every connection is encrypted. Every policy update is cryptographically signed. Every device is verified before it touches your network.</p>
+
+      <h2>What makes ORBTR different</h2>
+      <ul>
+        <li><strong>One agent, both jobs</strong> — device management and zero-trust networking in a single binary. No pairing separate MDM and VPN tools.</li>
+        <li><strong>Mesh-first architecture</strong> — devices connect peer-to-peer over an encrypted VL1 overlay. No gateway appliances, no single point of failure.</li>
+        <li><strong>Virtual Wire (L2–L7)</strong> — full-stack network virtualisation from Ethernet framing to application-layer policy. Traditional VPNs only operate at L3.</li>
+        <li><strong>Offline-resilient</strong> — policies propagate via mesh gossip. Devices keep working during control plane outages.</li>
+        <li><strong>Transparent pricing</strong> — per-device, not per-user. Unlimited users on every plan.</li>
+      </ul>
+
+      <h2>Getting started</h2>
+      <p>Every account starts with a 30-day free trial of the Pro tier with up to 25 devices. Install the agent with a single command:</p>
+      <pre><code>curl -fsSL https://get.orbtr.io | sh
+      orbtrctl enroll --tenant your-org</code></pre>
+      <p>After enrollment, your device appears in the control plane instantly. Push policies, run jobs, monitor health, and enforce zero-trust access from a single dashboard.</p>
+
+      <p><a href="https://app.orbtr.io/auth/setup">Start your free trial</a> or <a href="/features">explore the full feature set</a>.</p>
+
+  - slug: virtual-wire-explained
+    title: "Virtual Wire: Why L2–L7 Networking Changes Everything"
+    date: "16 Mar 2026"
+    author: "ORBTR Team"
+    tags:
+      - engineering
+      - networking
+    description: "Traditional VPNs operate at Layer 3 and route all traffic through a central gateway. ORBTR's Virtual Wire spans L2 through L7 — here's why that matters."
+    content: |
+      <h2>The problem with Layer 3 VPNs</h2>
+      <p>Traditional VPNs and overlay networks operate at a single layer — usually L3 (IP routing). This means they can route packets between endpoints, but they can't bridge Ethernet segments, enforce transport-layer policy, or inspect application protocols. Everything funnels through a central gateway, creating a bottleneck and a single point of failure.</p>
+
+      <h2>What Virtual Wire provides</h2>
+      <p>ORBTR's Virtual Wire spans the full OSI stack:</p>
+      <ul>
+        <li><strong>L2 — Data Link:</strong> VLAN bridging and broadcast domain extension across sites. Extend your local network anywhere.</li>
+        <li><strong>L3 — Network:</strong> Encrypted mesh overlay with per-tenant VRF isolation. Standard IP routing without gateway appliances.</li>
+        <li><strong>L4 — Transport:</strong> Per-flow policy enforcement with segment-aware forwarding. Control traffic at the connection level.</li>
+        <li><strong>L7 — Application:</strong> DNS policy, protocol inspection, and identity-aware access decisions. Understand what applications are doing, not just where packets go.</li>
+      </ul>
+
+      <h2>No gateway, no bottleneck</h2>
+      <p>Because Virtual Wire is agent-native, there's no gateway appliance to rack, patch, or capacity-plan. Traffic flows directly between devices. Edge Endpoints provide relay only when direct peer-to-peer connections fail.</p>
+
+      <p>This architecture means sub-5ms P2P latency, zero single points of failure, and a network that keeps working even when the control plane is unreachable.</p>
+
+      <p><a href="/features">See the full feature breakdown</a> or <a href="https://app.orbtr.io/auth/setup">start a free trial</a>.</p>
+
+  - slug: zero-trust-key-hierarchy
+    title: "Inside ORBTR's Three-Tier Key Hierarchy"
+    date: "19 Mar 2026"
+    author: "ORBTR Team"
+    tags:
+      - engineering
+      - security
+    description: "A deep-dive into ORBTR's Ed25519 key hierarchy — Platform Root, Tenant Root, and Agent Keys — and how dual-signed Root Descriptors protect your fleet."
+    content: |
+      <h2>Why key hierarchy matters</h2>
+      <p>In a zero-trust system, every action needs to be cryptographically verified. But who verifies the verifiers? ORBTR uses a three-tier Ed25519 key hierarchy that separates concerns and limits blast radius if any single key is compromised.</p>
+
+      <h2>The three tiers</h2>
+
+      <h3>Platform Root (PR)</h3>
+      <p>The Platform Root is HSM-backed and signs Tenant Root certificates, Root Descriptors, TUF metadata, and Seed Manifests. It can also issue emergency policy overrides. On Enterprise plans, multiple compliance-segmented PRs (HIPAA, FedRAMP, IRAP, PCI) allow different regulatory frameworks to have independent trust chains.</p>
+
+      <h3>Tenant Root (TR)</h3>
+      <p>Each tenant gets its own Tenant Root key. The TR signs policies, job manifests, and co-signs the Root Descriptor alongside the PR. This dual-signature requirement means that compromising either key alone is insufficient to issue valid artifacts to agents. Tenants can export their TR for sovereignty purposes.</p>
+
+      <h3>Agent Key</h3>
+      <p>Each device generates a unique Ed25519 key pair during enrollment. The private key never leaves the device — it's stored in the OS keychain (DPAPI on Windows, Keychain on macOS, encrypted store on Linux). Agent keys sign heartbeats, mesh sessions, and DDNS updates.</p>
+
+      <h2>Dual-signed Root Descriptors</h2>
+      <p>The Root Descriptor (RD) is the trust anchor that agents use to verify everything else. It contains the OR public key, PR certificate, and TR certificate. Both the TR and PR must sign the RD — this dual-validity requirement is the foundation of the zero-trust model.</p>
+
+      <p>Agents verify the RD on enrollment and refresh it periodically. Epoch-based anti-rollback prevents downgrade attacks, and rate limiting on the agent side detects key compromise patterns.</p>
+
+      <p><a href="/security">Read more about ORBTR's security architecture</a>.</p>
